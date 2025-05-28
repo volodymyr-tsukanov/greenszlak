@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  greenszlak
-//
-//  Created by student on 28/05/2025.
-//
-
 import SwiftUI
 import MapKit
 
@@ -13,6 +6,19 @@ struct ContentView: View {
     @State private var region: MKCoordinateRegion
     @State private var selectedPlant: Plant? = nil
     @State private var showPlantSheet = false
+    @State private var showMenu = false
+    @AppStorage("nazwaKoloruTla") private var nazwaKoloruTla: String = "bialy"
+
+    var kolorTla: Color {
+        switch nazwaKoloruTla {
+        case "zolty": return .yellow
+        case "niebieski": return .blue
+        case "zielony": return .green
+        case "szary": return .gray
+        case "czarny": return .black
+        default: return .white
+        }
+    }
 
     init() {
         let initialRegion = MKCoordinateRegion(
@@ -23,8 +29,24 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack {
-            Picker("Wybierz dzielnicę", selection: $selectedDistrict) {
+        ZStack {
+            kolorTla
+                .edgesIgnoringSafeArea(.all)
+            VStack {
+                HStack {
+                    Button(action: {
+                        withAnimation {
+                            showMenu.toggle()
+                        }
+                    }) {
+                        Image(systemName: "line.horizontal.3")
+                            .font(.largeTitle)
+                            .foregroundColor(.black)
+                            .padding()
+                    }
+                    Spacer()
+                }
+                Picker("Wybierz dzielnicę", selection: $selectedDistrict) {
                 ForEach(districts) { district in
                     Text(district.name).tag(district)
                 }
@@ -54,15 +76,14 @@ struct ContentView: View {
                         showPlantSheet = true
                     }
                 }
+                .edgesIgnoringSafeArea(.all)	//why?
             }
             .edgesIgnoringSafeArea(.all)
         }
-        //ZMIENIALAM
-        // z obrazkiem
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
                 VStack (spacing: 15){
-                    
+
                     Image(plant.imageName)
                         .resizable()
                         .scaledToFit()
@@ -85,9 +106,9 @@ struct ContentView: View {
                         .font(.body)
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal)
-                    
+
                     Spacer()
-                    
+
                     Button("Wyjdz") {
                         showPlantSheet = false
                     }
@@ -101,6 +122,6 @@ struct ContentView: View {
                 }
                 .padding()
             }
-        }//KONIEC ZMIENIANIA
+        }
     }
 }
