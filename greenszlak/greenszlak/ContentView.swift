@@ -57,6 +57,7 @@ struct ContentView: View {
             }
             .edgesIgnoringSafeArea(.all)
         }
+        //ZMIENIALAM
         // z obrazkiem
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
@@ -79,8 +80,7 @@ struct ContentView: View {
                     Text("Opis:")
                         .font(.headline)
                         .padding(.vertical, 5)
-//                    Text("Jest to: \(plant.name)")
-//                        .padding()
+
                     Text(plant.description)
                         .font(.body)
                         .multilineTextAlignment(.leading)
@@ -101,6 +101,6 @@ struct ContentView: View {
                 }
                 .padding()
             }
-        }
+        }//KONIEC ZMIENIANIA
     }
 }

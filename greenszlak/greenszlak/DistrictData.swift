@@ -24,7 +24,7 @@ struct District: Identifiable, Hashable {
         hasher.combine(id)
     }
 }
-
+//TUTAJ ZMIENIALAM, jest dodane description z opisem do kazdego
 let districts: [District] = [
     District(name: "Śródmieście",
              center: CLLocationCoordinate2D(latitude: 51.2485, longitude: 22.5655),

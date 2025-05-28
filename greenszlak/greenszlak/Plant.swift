@@ -9,7 +9,7 @@
 
 import Foundation
 import MapKit
-
+//TUTAJ ZMIENIONE dodane let description
 struct Plant: Identifiable {
     let id = UUID()
     let name: String
