@@ -15,6 +15,7 @@ struct Plant: Identifiable {
     let name: String
     let coordinate: CLLocationCoordinate2D
     let imageName: String
+    let description: String
 }
 
 

@@ -60,25 +60,44 @@ struct ContentView: View {
         // z obrazkiem
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
-                VStack {
+                VStack (spacing: 15){
                     
                     Image(plant.imageName)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 200, height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(radius: 10)
                         .padding()
 
                     Text(plant.name)
-                        .font(.title)
-                        .padding()
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.bottom, 5)
+                        .multilineTextAlignment(.center)
 
-                    Text("To jest roślina: \(plant.name)")
-                        .padding()
-
+                    Text("Opis:")
+                        .font(.headline)
+                        .padding(.vertical, 5)
+//                    Text("Jest to: \(plant.name)")
+//                        .padding()
+                    Text(plant.description)
+                        .font(.body)
+                        .multilineTextAlignment(.leading)
+                        .padding(.horizontal)
+                    
+                    Spacer()
+                    
                     Button("Wyjdz") {
                         showPlantSheet = false
                     }
+                    .font(.headline)
                     .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.green.opacity(0.7))
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
                 }
                 .padding()
             }
