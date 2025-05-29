@@ -1,13 +1,20 @@
 import SwiftUI
 import MapKit
+import CoreData
 
 
 struct ContentView: View {
-    @State private var selectedDistrict = districts.first!
-    @State private var region: MKCoordinateRegion
-    @State private var selectedPlant: Plant? = nil
+    @Environment(\.managedObjectContext) private var viewContext
+
+    @FetchRequest(entity: District.entity(), sortDescriptors: [NSSortDescriptor(keyPath: \District.timestamp, ascending: false)])
+    private var fetchedDistricts: FetchedResults<District>
+
+    @State private var selectedDistrict: DistrictModel?
+    @State private var region: MKCoordinateRegion = MKCoordinateRegion()
+    @State private var selectedPlant: PlantModel? = nil
     @State private var showPlantSheet = false
     @State private var showMenu = false
+
     @AppStorage("nazwaKoloruTla") private var nazwaKoloruTla: String = "bialy"
 
     var kolorTla: Color {
@@ -21,18 +28,14 @@ struct ContentView: View {
         }
     }
 
-    init() {
-        let initialRegion = MKCoordinateRegion(
-            center: districts.first!.center,
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-        )
-        _region = State(initialValue: initialRegion)
+    private var districts: [DistrictModel] {
+        fetchedDistricts.map { $0.toModel }
     }
 
     var body: some View {
         ZStack {
-            kolorTla
-                .edgesIgnoringSafeArea(.all)
+            kolorTla.edgesIgnoringSafeArea(.all)
+
             VStack {
                 HStack {
                     Button(action: {
@@ -47,44 +50,61 @@ struct ContentView: View {
                     }
                     Spacer()
                 }
-                Picker("Wybierz dzielnicę", selection: $selectedDistrict) {
-                ForEach(districts) { district in
-                    Text(district.name).tag(district)
-                }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
-            .onChange(of: selectedDistrict) { newDistrict in
-                region.center = newDistrict.center
-            }
 
-            Map(coordinateRegion: $region, annotationItems: selectedDistrict.plants) { plant in
-                MapAnnotation(coordinate: plant.coordinate) {
-                    VStack(spacing: 2) {
-                        Image(systemName: "leaf.fill")
-                            .foregroundColor(.green)
-                            .padding(6)
-                            .background(Circle().fill(Color.white))
-                            .shadow(radius: 3)
-                        Text(plant.name)
-                            .font(.caption2)
-                            .padding(2)
-                            .background(Color.white.opacity(0.8))
-                            .cornerRadius(4)
+                if !districts.isEmpty {
+                    Picker("Wybierz dzielnicę", selection: $selectedDistrict) {
+                        ForEach(districts, id: \.id) { district in
+                            Text(district.name).tag(Optional(district))
+                        }
                     }
-                    .onTapGesture {
-                        selectedPlant = plant
-                        showPlantSheet = true
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding()
+                    .onChange(of: selectedDistrict) { newDistrict in
+                        if let center = newDistrict?.center {
+                            region.center = center
+                        }
                     }
+
+                    Map(coordinateRegion: $region, annotationItems: selectedDistrict?.plants ?? []) { plant in
+                        MapAnnotation(coordinate: plant.coordinate) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "leaf.fill")
+                                    .foregroundColor(.green)
+                                    .padding(6)
+                                    .background(Circle().fill(Color.white))
+                                    .shadow(radius: 3)
+                                Text(plant.name)
+                                    .font(.caption2)
+                                    .padding(2)
+                                    .background(Color.white.opacity(0.8))
+                                    .cornerRadius(4)
+                            }
+                            .onTapGesture {
+                                selectedPlant = plant
+                                showPlantSheet = true
+                            }
+                        }
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                } else {
+                    Text("Brak danych o dzielnicach")
+                        .font(.headline)
+                        .padding()
                 }
-                .edgesIgnoringSafeArea(.all)	//why?
             }
-            .edgesIgnoringSafeArea(.all)
+        }
+        .onAppear {
+            if let firstDistrict = districts.first {
+                selectedDistrict = firstDistrict
+                region = MKCoordinateRegion(
+                    center: firstDistrict.center,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+            }
         }
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
-                VStack (spacing: 15){
-
+                VStack(spacing: 15) {
                     Image(plant.imageID)
                         .resizable()
                         .scaledToFit()
@@ -103,7 +123,7 @@ struct ContentView: View {
                         .font(.headline)
                         .padding(.vertical, 5)
 
-                    Text(plant.description)
+                    Text(plant.info)
                         .font(.body)
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal)

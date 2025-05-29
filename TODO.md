@@ -7,5 +7,5 @@
 
 # yan
 - create views:
-    + add plant (pops on fab button click)
+    + add plant ui via _View/AddPlant_
     + integrate _View/TagPicker_ into pland creation view
