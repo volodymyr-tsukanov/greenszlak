@@ -4,7 +4,7 @@
 
 # nat
 - review edits in _ContentView_, _Persistence_
-- fix shitty code written by `vov`
+- review code written by `vov`
 
 # yan
 - create views:
