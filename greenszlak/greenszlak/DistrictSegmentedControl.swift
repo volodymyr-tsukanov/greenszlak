@@ -1,13 +1,7 @@
-//
-//  DistrictSegmentedControl.swift
-//  zielnik
-//
-//  Created by student on 07/05/2025.
-//
-
+// TODO merge with edits in Data/District
 import SwiftUI
-
 import UIKit
+
 
 class DistrictSegmentedControl: UISegmentedControl {
     init() {

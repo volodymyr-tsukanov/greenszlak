@@ -1,0 +1,145 @@
+You are experienced swift dev and designing ios app, your main goal is ease of implementation and speed of development.
+The main theme of the app is "greenszlak: find plants on the streets, build your map". User can open map and add a new pin for the spotted plant (containing title, description, photo, tags(const defined strings)).
+The app uses MapKit for maps and CoreData for persistance, but objects must be converted to struct '*Model' before using them in UI.
+
+Analyze:
+datamodel
+```
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23231" systemVersion="23G93" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="District" representedClassName="District" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="timestamp" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="latitude" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="longitude" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="plants" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Plant" inverseName="district" inverseEntity="Plant"/>
+    </entity>
+    <entity name="Plant" representedClassName="Plant" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="info" optional="YES" attributeType="String"/>
+        <attribute name="latitude" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="longitude" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="timestamp" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="imageID" optional="YES" attributeType="String"/>
+        <attribute name="tagsRaw" optional="YES" attributeType="Transformable" customClass="[String]"/>
+        <relationship name="district" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="District" inverseName="plants" inverseEntity="District"/>
+    </entity>
+</model>
+```
+models
+```
+import Foundation
+import MapKit
+struct DistrictModel: Identifiable, Hashable {
+    let id: UUID
+    let name: String
+    let timestamp: Date
+    let center: CLLocationCoordinate2D
+    let plants: [PlantModel]
+
+    static func == (lhs: DistrictModel, rhs: DistrictModel) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+extension District {
+    static func from(_ model: DistrictModel, context: NSManagedObjectContext) -> District {
+        let district = District(context: context)
+        district.id = model.id
+        district.name = model.name
+        district.timestamp = model.timestamp
+        district.latitude = model.center.latitude
+        district.longitude = model.center.longitude
+        return district
+    }
+
+    var toModel: DistrictModel {
+        DistrictModel(
+            id: self.id,
+            name: self.name ?? "Unknown",
+            timestamp: self.timestamp ?? Date(),
+            center: CLLocationCoordinate2D(latitude: self.latitude, longitude: self.longitude),
+            plants: (self.plants as? Set<Plant> ?? []).map { $0.toModel }
+        )
+    }
+}
+
+struct PlantModel: Identifiable {
+    let id : UUID
+    let name: String
+    let info: String
+    let timestamp: Date
+    let coordinate: CLLocationCoordinate2D
+    let imageID: String
+    let tags: [TagType]
+}
+extension Plant {
+    static func from(_ model: PlantModel, context: NSManagedObjectContext) -> Plant {
+        let entity = Plant(context: context)
+        entity.id = model.id
+        entity.name = model.name
+        entity.info = model.info
+        entity.timestamp = model.timestamp
+        entity.latitude = model.coordinate.latitude
+        entity.longitude = model.coordinate.longitude
+        entity.imageID = model.imageID
+        entity.tagsRaw = model.tags.map { $0.rawValue }
+        return entity
+    }
+
+    var toModel: PlantModel {
+        PlantModel(
+            id: self.id,
+            name: self.name ?? "Unknown",
+            info: self.info ?? "",
+            timestamp: self.timestamp ?? Date(),
+            coordinate: CLLocationCoordinate2D(latitude: self.latitude, longitude: self.longitude),
+            imageID: self.imageID ?? "placeholder",
+            tags: (self.tagsRaw as? [String] ?? []).compactMap { raw in
+                TagType(rawValue: raw) ?? .whoyou
+            }
+        )
+    }
+}
+
+enum TagType: String, CaseIterable, Identifiable, Codable, Hashable {
+    case tree
+    case flower
+    case shrub
+    case grass
+    case herb
+    case moss
+    case whoyou
+
+    var id: String { self.rawValue }
+
+    var displayName: String {
+        switch self {
+        case .tree: return "Tree"
+        case .flower: return "Flower"
+        case .shrub: return "Shrub"
+        case .grass: return "Grass"
+        case .herb: return "Herb"
+        case .moss: return "Moss"
+        case .whoyou: return "?"
+        }
+    }
+
+    var emoji: String {
+        switch self {
+        case .tree: return "🌳"
+        case .flower: return "🌸"
+        case .shrub: return "🌿"
+        case .grass: return "🍃"
+        case .herb: return "🌱"
+        case .moss: return "🪴"
+        case .whoyou: return "🤨"
+        }
+    }
+}
+```

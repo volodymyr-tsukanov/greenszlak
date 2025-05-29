@@ -56,8 +56,3 @@ struct MenuBoczne: View {
         .padding(.leading)
     }
 }
-
-
-
-
-

@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 
+
 struct ContentView: View {
     @State private var selectedDistrict = districts.first!
     @State private var region: MKCoordinateRegion
@@ -84,7 +85,7 @@ struct ContentView: View {
             if let plant = selectedPlant {
                 VStack (spacing: 15){
 
-                    Image(plant.imageName)
+                    Image(plant.imageID)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 200, height: 200)
