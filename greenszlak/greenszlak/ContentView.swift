@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var selectedPlant: PlantModel? = nil
     @State private var showPlantSheet = false
     @State private var showMenu = false
+    // add Plant
+    @State private var showAddPlantView = false
+    @State private var newPlantCoordinate: CLLocationCoordinate2D? = nil
 
     @AppStorage("nazwaKoloruTla") private var nazwaKoloruTla: String = "bialy"
 
@@ -85,6 +88,14 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .gesture(
+                        LongPressGesture(minimumDuration: 1.3)
+                            .onEnded { _ in
+                                let center = region.center  //approx. let it be, it's not commercial
+                                newPlantCoordinate = center
+                                showAddPlantView = true
+                            }
+                    )
                     .edgesIgnoringSafeArea(.all)
                 } else {
                     Text("Brak danych o dzielnicach")
@@ -142,6 +153,12 @@ struct ContentView: View {
                     .padding(.horizontal)
                 }
                 .padding()
+            }
+        }
+        .sheet(isPresented: $showAddPlantView) {
+            if let coordinate = newPlantCoordinate {
+                AddPlantView(coordinate: coordinate, district: selectedDistrict)
+                    .environment(\.managedObjectContext, viewContext)
             }
         }
     }

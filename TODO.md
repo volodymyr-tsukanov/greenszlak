@@ -4,8 +4,9 @@
 
 # nat
 - review edits in _ContentView_, _Persistence_
+- fix shitty code written by `vov`
 
 # yan
 - create views:
-    + add plant ui via _View/AddPlant_
-    + integrate _View/TagPicker_ into pland creation view
+    + add plant ui via _View/AddPlantView_
+    + integrate _View/TagPicker_ into plant creation view
