@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var showAddPlantView = false
     @State private var newPlantCoordinate: CLLocationCoordinate2D? = nil
 
+    //TODO change all namings to English (for consistency reasons)
     @AppStorage("nazwaKoloruTla") private var nazwaKoloruTla: String = "bialy"
 
     var kolorTla: Color {
@@ -115,6 +116,10 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
+                PlantEditorView(plant: plant, district: selectedDistrict)
+                    .environment(\.managedObjectContext, viewContext)
+            }
+            /*if let plant = selectedPlant {
                 VStack(spacing: 15) {
                     Image(plant.imageID)
                         .resizable()
@@ -153,7 +158,7 @@ struct ContentView: View {
                     .padding(.horizontal)
                 }
                 .padding()
-            }
+            }*/
         }
         .sheet(isPresented: $showAddPlantView) {
             if let coordinate = newPlantCoordinate {
