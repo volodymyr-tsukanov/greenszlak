@@ -2,7 +2,7 @@ import CoreData
 import MapKit
 
 
-struct PersistenceController {
+class PersistenceController {
     static let shared = PersistenceController()
 
     static let preview: PersistenceController = {
@@ -16,6 +16,10 @@ struct PersistenceController {
 
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "greenszlak")
+        let description = container.persistentStoreDescriptions.first
+        description?.shouldMigrateStoreAutomatically = true
+        description?.shouldInferMappingModelAutomatically = true
+        
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
@@ -24,7 +28,7 @@ struct PersistenceController {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
 
-            let context = container.viewContext
+            let context = self.container.viewContext
             let request: NSFetchRequest<Plant> = Plant.fetchRequest()
             request.fetchLimit = 1
             if let count = try? context.count(for: request), count == 0 {

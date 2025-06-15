@@ -1,9 +1,9 @@
 import Foundation
 import MapKit
-
+import CoreData
 
 struct PlantModel: Identifiable {
-    let id : UUID
+    let id: UUID
     let name: String
     let info: String
     let timestamp: Date
@@ -22,13 +22,13 @@ extension Plant {
         entity.latitude = model.coordinate.latitude
         entity.longitude = model.coordinate.longitude
         entity.imageID = model.imageID
-        entity.tagsRaw = model.tags.map { $0.rawValue }
+        entity.tagsRaw = NSArray(array: model.tags.map { $0.rawValue })
         return entity
     }
 
     var toModel: PlantModel {
         PlantModel(
-            id: self.id,
+            id: self.id ?? UUID(),
             name: self.name ?? "Unknown",
             info: self.info ?? "",
             timestamp: self.timestamp ?? Date(),

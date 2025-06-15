@@ -2,18 +2,50 @@ import SwiftUI
 import MapKit
 import CoreData
 
-
 struct AddPlantView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.presentationMode) private var presentationMode
 
     let coordinate: CLLocationCoordinate2D
     let district: DistrictModel?
 
-    // Add @State properties for form inputs here
+    @State private var name: String = ""
+    @State private var info: String = ""
+    @State private var photoId: String = ""
+    @State private var selectedTags: Set<TagType> = []
 
     var body: some View {
-        // TODO: Implement UI to enter plant details, select image, tags, etc.
-        EmptyView()
+        NavigationView {
+            Form {
+                Section(header: Text("Plant Details")) {
+                    TextField("Name", text: $name)
+                    TextField("Description", text: $info)
+                    TextField("Photo ID", text: $photoId)
+                }
+
+                Section(header: Text("Tags")) {
+                    ForEach(TagType.allCases) { tag in
+                        MultipleSelectionRow(title: tag.displayName, emoji: tag.emoji, isSelected: selectedTags.contains(tag)) {
+                            if selectedTags.contains(tag) {
+                                selectedTags.remove(tag)
+                            } else {
+                                selectedTags.insert(tag)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add Plant")
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing: Button("Save") {
+                    savePlant()
+                    presentationMode.wrappedValue.dismiss()
+                }.disabled(name.isEmpty)
+            )
+        }
     }
 
     private func savePlant() {
@@ -21,17 +53,16 @@ struct AddPlantView: View {
 
         let newPlantModel = PlantModel(
             id: UUID(),
-            name: "", // fill in from user input
-            info: "",
+            name: name,
+            info: info,
             timestamp: Date(),
             coordinate: coordinate,
-            imageID: "", // fill in from selected image
-            tags: [] // fill in from selected tags
+            imageID: photoId,
+            tags: Array(selectedTags)
         )
 
         let plant = Plant.from(newPlantModel, context: viewContext)
 
-        // Link plant to district if needed
         let districtFetchRequest: NSFetchRequest<District> = District.fetchRequest()
         districtFetchRequest.predicate = NSPredicate(format: "id == %@", district.id as CVarArg)
 
@@ -43,3 +74,26 @@ struct AddPlantView: View {
         try? viewContext.save()
     }
 }
+
+struct MultipleSelectionRow: View {
+    let title: String
+    let emoji: String
+    var isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text("\(emoji) \(title)")
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundColor(.accentColor)
+                }
+            }
+        }
+        .foregroundColor(.primary)
+    }
+}
+
+

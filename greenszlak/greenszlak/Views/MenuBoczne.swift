@@ -1,28 +1,23 @@
 import SwiftUI
 
-
 struct MenuBoczne: View {
     @Binding var pokazMenu: Bool
     @Binding var nazwaKoloruTla: String
-
-
+    
     let opcjeKolorow: [(nazwa: String, kolor: Color)] = [
         ("bialy", .white),
         ("zolty", .yellow),
         ("niebieski", .blue),
         ("zielony", .green),
-        ("szary", .gray),
-        ("czarny", .black)
+        ("szary", .gray)
     ]
-
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Wybierz kolor tła")
                 .font(.headline)
                 .padding(.top, 40)
-
-
+            
             ForEach(opcjeKolorow, id: \.nazwa) { opcja in
                 Button(action: {
                     nazwaKoloruTla = opcja.nazwa
@@ -36,11 +31,9 @@ struct MenuBoczne: View {
                     }
                 }
             }
-
-
+            
             Spacer()
-
-
+            
             Button("Zamknij") {
                 withAnimation {
                     pokazMenu = false
@@ -56,3 +49,6 @@ struct MenuBoczne: View {
         .padding(.leading)
     }
 }
+
+
+

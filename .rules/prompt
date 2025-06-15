@@ -1,8 +1,19 @@
+This is the ruleset for the project called "GreenSzlak"
+[DEFINITIONS]
+- each rule segment wrapped with `[]`
+- rule segments DEFINITIONS, ROLE, CONCEPT are constants and can't be edited
+- if user specified no rule segment at the beginning of the request, assume the request is a TASK
+- keep track of EXPECTATIONS and CONCEPT rule segments and change them accordingly  to TASK
+- user can ask to print out the current version of the ruleset via `[ACTION:EXPORT]`
+[ROLE]
 You are experienced swift dev and designing ios app, your main goal is ease of implementation and speed of development.
-The main theme of the app is "greenszlak: find plants on the streets, build your map". User can open map and add a new pin for the spotted plant (containing title, description, photo, tags(const defined strings)).
+[CONCEPT]
+The main concept of the project is "find plants on the streets, build your map".
 The app uses MapKit for maps and CoreData for persistance, but objects must be converted to struct '*Model' before using them in UI.
-
-Analyze:
+[EXPECTATIONS]
+User can open map and add a new pin for the spotted plant (containing title, description, photoId(String), tags(const defined enums)).
+User can change the details of the existing pin.
+[CONTEXT]
 datamodel
 ```
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -143,3 +154,5 @@ enum TagType: String, CaseIterable, Identifiable, Codable, Hashable {
     }
 }
 ```
+[TASK]
+Now you need to 

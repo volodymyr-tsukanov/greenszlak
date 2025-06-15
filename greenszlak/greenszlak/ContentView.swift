@@ -2,44 +2,53 @@ import SwiftUI
 import MapKit
 import CoreData
 
-
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(entity: District.entity(), sortDescriptors: [NSSortDescriptor(keyPath: \District.timestamp, ascending: false)])
+    
+    @FetchRequest(
+        entity: District.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \District.timestamp, ascending: false)]
+    )
     private var fetchedDistricts: FetchedResults<District>
-
-    @State private var selectedDistrict: DistrictModel?
+    
+    // Track selected district by ID (UUID)
+    @State private var selectedDistrictID: UUID?
+    
     @State private var region: MKCoordinateRegion = MKCoordinateRegion()
     @State private var selectedPlant: PlantModel? = nil
     @State private var showPlantSheet = false
+    @State private var showPlantEditor = false
     @State private var showMenu = false
-    // add Plant
     @State private var showAddPlantView = false
     @State private var newPlantCoordinate: CLLocationCoordinate2D? = nil
-
-    //TODO change all namings to English (for consistency reasons)
+    
     @AppStorage("nazwaKoloruTla") private var nazwaKoloruTla: String = "bialy"
-
+    
     var kolorTla: Color {
         switch nazwaKoloruTla {
         case "zolty": return .yellow
         case "niebieski": return .blue
         case "zielony": return .green
         case "szary": return .gray
-        case "czarny": return .black
         default: return .white
         }
     }
-
+    
+    // Convert Core Data objects to models
     private var districts: [DistrictModel] {
         fetchedDistricts.map { $0.toModel }
     }
-
+    
+    // Get the currently selected district model from selectedDistrictID
+    private var selectedDistrictModel: DistrictModel? {
+        guard let id = selectedDistrictID else { return nil }
+        return districts.first(where: { $0.id == id })
+    }
+    
     var body: some View {
         ZStack {
             kolorTla.edgesIgnoringSafeArea(.all)
-
+            
             VStack {
                 HStack {
                     Button(action: {
@@ -54,22 +63,22 @@ struct ContentView: View {
                     }
                     Spacer()
                 }
-
+                
                 if !districts.isEmpty {
-                    Picker("Wybierz dzielnicę", selection: $selectedDistrict) {
+                    Picker("Wybierz dzielnicę", selection: $selectedDistrictID) {
                         ForEach(districts, id: \.id) { district in
-                            Text(district.name).tag(Optional(district))
+                            Text(district.name).tag(Optional(district.id))
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding()
-                    .onChange(of: selectedDistrict) { newDistrict in
-                        if let center = newDistrict?.center {
-                            region.center = center
+                    .onChange(of: selectedDistrictID) { newID in
+                        if let district = districts.first(where: { $0.id == newID }) {
+                            region.center = district.center
                         }
                     }
-
-                    Map(coordinateRegion: $region, annotationItems: selectedDistrict?.plants ?? []) { plant in
+                    
+                    Map(coordinateRegion: $region, annotationItems: selectedDistrictModel?.plants ?? []) { plant in
                         MapAnnotation(coordinate: plant.coordinate) {
                             VStack(spacing: 2) {
                                 Image(systemName: "leaf.fill")
@@ -92,22 +101,26 @@ struct ContentView: View {
                     .gesture(
                         LongPressGesture(minimumDuration: 1.3)
                             .onEnded { _ in
-                                let center = region.center  //approx. let it be, it's not commercial
-                                newPlantCoordinate = center
+                                newPlantCoordinate = region.center
                                 showAddPlantView = true
                             }
                     )
                     .edgesIgnoringSafeArea(.all)
                 } else {
-                    Text("Brak danych o dzielnicach")
+                    Text("No district data available")
                         .font(.headline)
                         .padding()
                 }
             }
+            
+            if showMenu {
+                MenuBoczne(pokazMenu: $showMenu, nazwaKoloruTla: $nazwaKoloruTla)
+                    .transition(.move(edge: .leading))
+            }
         }
         .onAppear {
             if let firstDistrict = districts.first {
-                selectedDistrict = firstDistrict
+                selectedDistrictID = firstDistrict.id
                 region = MKCoordinateRegion(
                     center: firstDistrict.center,
                     span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -116,55 +129,36 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showPlantSheet) {
             if let plant = selectedPlant {
-                PlantEditorView(plant: plant, district: selectedDistrict)
-                    .environment(\.managedObjectContext, viewContext)
-            }
-            /*if let plant = selectedPlant {
-                VStack(spacing: 15) {
-                    Image(plant.imageID)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .shadow(radius: 10)
-                        .padding()
-
-                    Text(plant.name)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.bottom, 5)
-                        .multilineTextAlignment(.center)
-
-                    Text("Opis:")
-                        .font(.headline)
-                        .padding(.vertical, 5)
-
-                    Text(plant.info)
-                        .font(.body)
-                        .multilineTextAlignment(.leading)
-                        .padding(.horizontal)
-
-                    Spacer()
-
-                    Button("Wyjdz") {
+                PlantDetailView(
+                    plant: plant,
+                    kolorTla: kolorTla,
+                    onEdit: {
                         showPlantSheet = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showPlantEditor = true
+                        }
                     }
-                    .font(.headline)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.green.opacity(0.7))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                }
-                .padding()
-            }*/
+                )
+            }
+        }
+        .sheet(isPresented: $showPlantEditor) {
+            if let plant = selectedPlant {
+                PlantEditorView(
+                    plant: plant,
+                    district: selectedDistrictModel,
+                    kolorTla: kolorTla
+                )
+                .environment(\.managedObjectContext, viewContext)
+            }
         }
         .sheet(isPresented: $showAddPlantView) {
             if let coordinate = newPlantCoordinate {
-                AddPlantView(coordinate: coordinate, district: selectedDistrict)
+                AddPlantView(coordinate: coordinate, district: selectedDistrictModel)
                     .environment(\.managedObjectContext, viewContext)
             }
         }
     }
 }
+
+
+
