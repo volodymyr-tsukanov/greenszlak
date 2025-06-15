@@ -3,6 +3,8 @@ Discover, snap, share Your Green world
 <br><br>
 
 
+![Finished](https://img.shields.io/badge/status-Finished%20%F0%9F%94%9A-3CB371?style=for-the-badge&logo=github)
+
 Shields: [![BSD 3-Clause License][bsd-shield]][bsd]
 
 [bsd]: https://opensource.org/licenses/BSD-3-Clause
